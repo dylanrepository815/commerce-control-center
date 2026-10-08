@@ -9,3 +9,4 @@ __pycache__/
 *.tsbuildinfo
 .venv/
 LOCAL-PREVIEW-ACCESS.txt
+backups/
