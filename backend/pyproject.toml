@@ -1,0 +1,8 @@
+[project]
+name = "commerce-control-center"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["fastapi", "uvicorn[standard]", "sqlalchemy", "alembic", "psycopg[binary]", "pwdlib[argon2]", "pydantic-settings"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

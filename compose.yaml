@@ -1,0 +1,84 @@
+name: commerce-control-center
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: control_center
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./ops/init-db.sh:/docker-entrypoint-initdb.d/10-app-role.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d control_center"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  migrate:
+    build: ./backend
+    environment:
+      MIGRATION_DATABASE_URL: postgresql+psycopg://postgres:${POSTGRES_PASSWORD}@db/control_center
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://cc_app:${APP_DB_PASSWORD}@db/control_center
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3000}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ENABLE_FIXTURES: ${ENABLE_FIXTURES:-false}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+  frontend:
+    build: ./frontend
+    environment:
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+  integration-tests:
+    profiles: ["test"]
+    build: ./backend
+    command: ["pytest", "-q"]
+    environment:
+      TEST_POSTGRES_URL: postgresql+psycopg://postgres:${POSTGRES_PASSWORD}@db/control_center
+      TEST_RUNTIME_PASSWORD: ${APP_DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  postgres_data:

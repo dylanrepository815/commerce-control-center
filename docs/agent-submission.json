@@ -1,0 +1,15 @@
+{
+  "candidates": [
+    {
+      "domain": "replace-with-a-researched-domain.com",
+      "source": "Replace with authorized provider name",
+      "scamadviser_score": null,
+      "history_status": "UNKNOWN",
+      "backlink_status": "UNKNOWN",
+      "safety_status": "UNKNOWN",
+      "niche_fit_score": null,
+      "warnings": ["Illustrative request only; no research performed"],
+      "evidence": []
+    }
+  ]
+}
