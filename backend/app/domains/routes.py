@@ -81,6 +81,7 @@ def report(candidate_id: str, actor=Depends(owner), db=Depends(get_db)):
     if not candidate:
         raise HTTPException(404, "Candidate not found")
     run = db.get(ResearchRun, candidate.run_id)
+    get_project(db, run.project_id)
     return {
         "candidate": candidate,
         "is_demo": run.is_demo,

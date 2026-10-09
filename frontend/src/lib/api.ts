@@ -62,6 +62,7 @@ export type Project = {
   selected_domain: string | null;
   approved_by: string | null;
   approved_at: string | null;
+  deleted_at: string | null;
 };
 export type Candidate = {
   id: string;
