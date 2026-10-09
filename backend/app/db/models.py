@@ -91,6 +91,7 @@ class Project(Identity, Base):
     )
     approved_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     approved_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    deleted_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
     updated_at: Mapped[datetime] = mapped_column(
         UTCDateTime(), default=now, onupdate=now
     )

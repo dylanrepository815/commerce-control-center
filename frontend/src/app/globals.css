@@ -320,6 +320,31 @@ footer {
   font-size: 13px;
   margin-bottom: 0;
 }
+.project-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.button.danger {
+  background: #a63838;
+  color: white;
+}
+.button.danger:hover {
+  background: #852c2c;
+}
+.danger-outline {
+  color: #a63838;
+  border-color: #e6c7c7;
+}
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 20px;
+}
 .eyebrow {
   font-size: 9px;
   font-weight: 700;

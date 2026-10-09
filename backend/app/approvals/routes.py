@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import select
 from app.core.security import owner
-from app.db.models import Approval, Candidate, ResearchRun, now
+from app.db.models import Approval, Candidate, ResearchRun, Project, now
 from app.db.session import get_db
 from app.projects.routes import get_project
 from app.audit.service import audit
@@ -19,7 +19,12 @@ class Selection(BaseModel):
 
 @router.get("/approvals")
 def approvals(actor=Depends(owner), db=Depends(get_db)):
-    return db.scalars(select(Approval).order_by(Approval.created_at.desc())).all()
+    return db.scalars(
+        select(Approval)
+        .join(Project, Approval.project_id == Project.id)
+        .where(Project.deleted_at.is_(None))
+        .order_by(Approval.created_at.desc())
+    ).all()
 
 
 @router.post("/projects/{project_id}/select-domain")

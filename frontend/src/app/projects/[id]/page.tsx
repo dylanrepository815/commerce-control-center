@@ -1,6 +1,7 @@
 "use client";
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowDownUp,
@@ -8,6 +9,8 @@ import {
   FileSearch,
   ShieldCheck,
   ExternalLink,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import {
   api,
@@ -47,6 +50,7 @@ export default function ProjectDetail({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const router = useRouter();
   const { id } = use(params);
   const [project, setProject] = useState<Project | null>(null),
     [runs, setRuns] = useState<Run[]>([]),
@@ -59,7 +63,11 @@ export default function ProjectDetail({
     [ack, setAck] = useState(false),
     [sort, setSort] = useState<keyof Candidate>("domain_score"),
     [asc, setAsc] = useState(false),
-    [runId, setRunId] = useState("");
+    [runId, setRunId] = useState(""),
+    [editing, setEditing] = useState(false),
+    [deleting, setDeleting] = useState(false),
+    [newName, setNewName] = useState(""),
+    [confirmName, setConfirmName] = useState("");
   const load = useCallback(async () => {
     const [p, r, s, e] = await Promise.all([
       api<Project>(`/projects/${id}`),
@@ -120,7 +128,33 @@ export default function ProjectDetail({
         eyebrow="PROJECT DETAIL"
         title={project.name}
         description={`${project.market} · ${project.niche}`}
-        action={<Badge value={project.status} />}
+        action={
+          <div className="project-actions">
+            <Badge value={project.status} />
+            <button
+              className="button compact secondary"
+              onClick={() => {
+                setNewName(project.name);
+                setError("");
+                setEditing(true);
+              }}
+            >
+              <Pencil size={14} />
+              Rename
+            </button>
+            <button
+              className="button compact secondary danger-outline"
+              onClick={() => {
+                setConfirmName("");
+                setError("");
+                setDeleting(true);
+              }}
+            >
+              <Trash2 size={14} />
+              Delete project
+            </button>
+          </div>
+        }
       />
       <ErrorBox error={error} />
       <div className="project-meta">
@@ -411,6 +445,110 @@ export default function ProjectDetail({
           ))}
         </div>
       </section>
+      {editing && (
+        <Modal
+          title="Rename project"
+          onClose={() => !busy && setEditing(false)}
+        >
+          <form
+            onSubmit={async (event) => {
+              event.preventDefault();
+              setBusy(true);
+              setError("");
+              try {
+                await api<Project>(`/projects/${id}`, {
+                  method: "PATCH",
+                  body: JSON.stringify({ name: newName }),
+                });
+                setEditing(false);
+                await load();
+              } catch (error) {
+                setError((error as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            <ErrorBox error={error} />
+            <label className="modal-field">
+              Project name
+              <input
+                autoFocus
+                value={newName}
+                maxLength={150}
+                required
+                onChange={(event) => setNewName(event.target.value)}
+              />
+            </label>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="button secondary"
+                disabled={busy}
+                onClick={() => setEditing(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="button primary"
+                disabled={busy || !newName.trim()}
+              >
+                {busy ? "Saving…" : "Save name"}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+      {deleting && (
+        <Modal
+          title="Delete project"
+          onClose={() => !busy && setDeleting(false)}
+        >
+          <ErrorBox error={error} />
+          <p>
+            Delete <strong>{project.name}</strong> from your active workspace?
+            Its research and audit history will be retained. Any pending
+            approval will be closed and project-scoped agent access revoked.
+          </p>
+          <label className="modal-field">
+            Type <strong>{project.name}</strong> to confirm
+            <input
+              autoFocus
+              value={confirmName}
+              onChange={(event) => setConfirmName(event.target.value)}
+            />
+          </label>
+          <div className="form-actions">
+            <button
+              className="button secondary"
+              disabled={busy}
+              onClick={() => setDeleting(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="button danger"
+              disabled={busy || confirmName !== project.name}
+              onClick={async () => {
+                setBusy(true);
+                setError("");
+                try {
+                  await api(`/projects/${id}`, {
+                    method: "DELETE",
+                    body: JSON.stringify({ confirm_name: confirmName }),
+                  });
+                  router.replace("/projects");
+                } catch (error) {
+                  setError((error as Error).message);
+                  setBusy(false);
+                }
+              }}
+            >
+              {busy ? "Deleting…" : "Delete project"}
+            </button>
+          </div>
+        </Modal>
+      )}
       {selection && (
         <Modal
           title="Confirm domain selection"

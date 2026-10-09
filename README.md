@@ -73,7 +73,7 @@ See [VERIFICATION.md](VERIFICATION.md) for the checks actually completed in this
 ## What works
 
 - Owner sign-in, session expiry, logout, backend authorization and CSRF/origin checks.
-- Dashboard, searchable/filterable projects, creation, detail, unique IDs and timestamps.
+- Dashboard, searchable/filterable projects, creation, detail, Owner-only renaming, audited deletion, unique IDs and timestamps. Deletion hides a project from active views while retaining its research and audit history; it closes pending approvals and revokes project-scoped agent credentials.
 - Persisted research runs, up to 20 candidates each, evidence reports, sortable PASS/REVIEW results, and visible rejection reports.
 - Owner confirmation of PASS candidates only, with an extra acknowledgement for fixture selections.
 - Transactional selection, approval attribution, status change and audit events.
